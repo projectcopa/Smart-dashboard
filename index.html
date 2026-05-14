@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartDash — India's All-in-One Digital Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body class="dark-mode">
+
+<!-- ═══════════════════════════════ CANVAS BG ═══════════════════════════════ -->
+<canvas id="bgCanvas"></canvas>
+
+<!-- ═══════════════════════════════ AUTH SCREEN ══════════════════════════════ -->
+<div id="authScreen" class="screen active">
+  <div class="auth-orb orb1"></div>
+  <div class="auth-orb orb2"></div>
+  <div class="auth-orb orb3"></div>
+
+  <div class="auth-card glass-card">
+    <div class="auth-logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text">SmartDash</span>
+    </div>
+    <p class="auth-tagline">India's All-in-One Digital Workspace</p>
+
+    <!-- Tab bar -->
+    <div class="auth-tabs" id="authTabs">
+      <button class="tab-btn active" data-tab="login">Login</button>
+      <button class="tab-btn" data-tab="signup">Sign Up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div class="auth-form active" id="loginForm">
+      <div class="input-group">
+        <span class="input-icon">📧</span>
+        <input type="text" id="loginEmail" placeholder="Email or Mobile Number" autocomplete="off"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">🔑</span>
+        <input type="password" id="loginPass" placeholder="Password"/>
+        <button class="eye-btn" onclick="togglePass('loginPass',this)">👁️</button>
+      </div>
+      <div class="auth-extras">
+        <label class="remember-me"><input type="checkbox" id="rememberMe"/> Remember Me</label>
+        <a href="#" class="link-btn" onclick="showForgot()">Forgot Password?</a>
+      </div>
+      <button class="btn-primary" onclick="handleLogin()">
+        <span>🚀 Login to Dashboard</span>
+      </button>
+      <div class="divider"><span>or continue with</span></div>
+      <div class="social-btns">
+        <button class="social-btn" onclick="handleLogin()">🇬 Google</button>
+        <button class="social-btn" onclick="handleLogin()">📱 Mobile OTP</button>
+      </div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div class="auth-form" id="signupForm">
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input type="text" id="signupName" placeholder="Full Name"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">📧</span>
+        <input type="text" id="signupEmail" placeholder="Email Address"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">📱</span>
+        <input type="text" id="signupMobile" placeholder="Mobile Number"/>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">🔑</span>
+        <input type="password" id="signupPass" placeholder="Create Password (min 8 chars)"/>
+        <button class="eye-btn" onclick="togglePass('signupPass',this)">👁️</button>
+      </div>
+      <div class="pass-strength" id="passStrength">
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+        <span id="strengthText">Password strength</span>
+      </div>
+      <button class="btn-primary" onclick="handleSignup()">
+        <span>✨ Create Account</span>
+      </button>
+    </div>
+
+    <!-- OTP FORM -->
+    <div class="auth-form" id="otpForm">
+      <div class="otp-header">
+        <div class="otp-icon">📲</div>
+        <h3>Verify Your Account</h3>
+        <p id="otpDesc">Enter the 6-digit OTP sent to your email/mobile</p>
+      </div>
+      <div class="otp-inputs">
+        <input class="otp-box" maxlength="1" type="text" onkeyup="otpNext(this,0)"/>
+        <input class="otp-box" maxlength="1" type="text" onkeyup="otpNext(this,1)"/>
+        <input class="otp-box" maxlength="1" type="text" onkeyup="otpNext(this,2)"/>
+        <input class="otp-box" maxlength="1" type="text" onkeyup="otpNext(this,3)"/>
+        <input class="otp-box" maxlength="1" type="text" onkeyup="otpNext(this,4)"/>
+        <input class="otp-box" maxlength="1" type="text" onkeyup="otpNext(this,5)"/>
+      </div>
+      <div class="otp-timer" id="otpTimer">⏱️ OTP expires in <span id="timerCount">05:00</span></div>
+      <button class="btn-primary" onclick="verifyOTP()"><span>✅ Verify OTP</span></button>
+      <button class="btn-ghost" id="resendBtn" disabled onclick="resendOTP()">🔄 Resend OTP</button>
+    </div>
+
+    <!-- FORGOT FORM -->
+    <div class="auth-form" id="forgotForm">
+      <div class="otp-header">
+        <div class="otp-icon">🔓</div>
+        <h3>Reset Password</h3>
+        <p>Enter your email to receive a reset OTP</p>
+      </div>
+      <div class="input-group">
+        <span class="input-icon">📧</span>
+        <input type="text" placeholder="Email Address"/>
+      </div>
+      <button class="btn-primary" onclick="showOtp('forgot')"><span>📨 Send Reset OTP</span></button>
+      <button class="btn-ghost" onclick="showTab('login')">← Back to Login</button>
+    </div>
+
+    <div class="auth-error" id="authError"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MAIN APP ═════════════════════════════════ -->
+<div id="appScreen" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar glass-card" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">⚡</span>
+      <span class="logo-text sidebar-logo-text">SmartDash</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard',this)">
+        <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+      </a>
+      <a class="nav-item" data-page="government" onclick="switchPage('government',this)">
+        <span class="nav-icon">🏛️</span><span class="nav-label">Government</span>
+      </a>
+      <a class="nav-item" data-page="banking" onclick="switchPage('banking',this)">
+        <span class="nav-icon">🏦</span><span class="nav-label">Banking</span>
+      </a>
+      <a class="nav-item" data-page="education" onclick="switchPage('education',this)">
+        <span class="nav-icon">🎓</span><span class="nav-label">Education</span>
+      </a>
+      <a class="nav-item" data-page="tools" onclick="switchPage('tools',this)">
+        <span class="nav-icon">🛠️</span><span class="nav-label">Tools</span>
+      </a>
+      <a class="nav-item" data-page="ai" onclick="switchPage('ai',this)">
+        <span class="nav-icon">🤖</span><span class="nav-label">AI Hub</span>
+      </a>
+      <a class="nav-item" data-page="daily" onclick="switchPage('daily',this)">
+        <span class="nav-icon">🌐</span><span class="nav-label">Daily Use</span>
+      </a>
+      <a class="nav-item" data-page="favorites" onclick="switchPage('favorites',this)">
+        <span class="nav-icon">⭐</span><span class="nav-label">Favorites</span>
+        <span class="nav-badge" id="favCount">0</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a class="nav-item" data-page="profile" onclick="switchPage('profile',this)">
+        <span class="nav-icon">👤</span><span class="nav-label">Profile</span>
+      </a>
+      <a class="nav-item" data-page="settings" onclick="switchPage('settings',this)">
+        <span class="nav-icon">⚙️</span><span class="nav-label">Settings</span>
+      </a>
+      <a class="nav-item" onclick="handleLogout()">
+        <span class="nav-icon">🚪</span><span class="nav-label">Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-wrap">
+
+    <!-- TOP NAVBAR -->
+    <header class="topbar glass-card">
+      <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()">☰</button>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search portals, tools, services…" oninput="handleSearch(this.value)"/>
+        <kbd>Ctrl+K</kbd>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme" id="themeBtn">🌙</button>
+        <button class="icon-btn notif-btn" onclick="switchPage('notifications',this)">
+          🔔<span class="notif-dot"></span>
+        </button>
+        <div class="user-chip" onclick="switchPage('profile',document.querySelector('[data-page=profile]'))">
+          <div class="user-avatar" id="userAvatar">A</div>
+          <span class="user-name" id="userName">User</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <main class="page-area">
+
+      <!-- SEARCH RESULTS OVERLAY -->
+      <div class="search-results" id="searchResults"></div>
+
+      <!-- ── DASHBOARD PAGE ── -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Good <span id="greeting">Morning</span>, <span id="welcomeName">User</span> 👋</h1>
+            <p class="page-sub" id="currentDateTime">Loading time…</p>
+          </div>
+          <div class="header-stats">
+            <div class="stat-chip"><span>⭐</span><span id="statFav">0 Favorites</span></div>
+            <div class="stat-chip"><span>🕐</span><span id="statRecent">0 Recent</span></div>
+          </div>
+        </div>
+
+        <!-- Quick stats bar -->
+        <div class="stats-row">
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#4fc3f722">🏛️</div>
+            <div><div class="stat-num">8</div><div class="stat-lbl">Gov Portals</div></div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#ef535022">🏦</div>
+            <div><div class="stat-num">8</div><div class="stat-lbl">Banks</div></div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#66bb6a22">🛠️</div>
+            <div><div class="stat-num">8</div><div class="stat-lbl">Tools</div></div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#ffa72622">🤖</div>
+            <div><div class="stat-num">6</div><div class="stat-lbl">AI Tools</div></div>
+          </div>
+        </div>
+
+        <!-- Recently Used -->
+        <div class="section-header">
+          <h2 class="section-title">🕐 Recently Used</h2>
+        </div>
+        <div class="portal-grid small-grid" id="recentGrid">
+          <div class="empty-state">No recent activity yet. Start exploring!</div>
+        </div>
+
+        <!-- All categories preview -->
+        <div id="allCategoriesPreview"></div>
+      </div>
+
+      <!-- ── GOVERNMENT PAGE ── -->
+      <div class="page" id="page-government">
+        <div class="page-header">
+          <h1 class="page-title">🏛️ Government Services</h1>
+          <p class="page-sub">Access Indian government portals securely</p>
+        </div>
+        <div class="portal-grid" id="govGrid"></div>
+      </div>
+
+      <!-- ── BANKING PAGE ── -->
+      <div class="page" id="page-banking">
+        <div class="page-header">
+          <h1 class="page-title">🏦 Banking Services</h1>
+          <p class="page-sub">Net banking, UPI and payment portals</p>
+        </div>
+        <div class="portal-grid" id="bankGrid"></div>
+      </div>
+
+      <!-- ── EDUCATION PAGE ── -->
+      <div class="page" id="page-education">
+        <div class="page-header">
+          <h1 class="page-title">🎓 Education Portals</h1>
+          <p class="page-sub">Online learning, scholarships and academic resources</p>
+        </div>
+        <div class="portal-grid" id="eduGrid"></div>
+      </div>
+
+      <!-- ── TOOLS PAGE ── -->
+      <div class="page" id="page-tools">
+        <div class="page-header">
+          <h1 class="page-title">🛠️ Utility Tools</h1>
+          <p class="page-sub">File converters, generators and productivity tools</p>
+        </div>
+        <div class="portal-grid" id="toolGrid"></div>
+        <!-- Built-in QR Tool -->
+        <div class="tool-panel glass-card" id="qrPanel" style="display:none">
+          <h3>📲 QR Code Generator</h3>
+          <input type="text" id="qrInput" placeholder="Enter URL or text…" class="tool-input"/>
+          <button class="btn-primary" onclick="generateQR()"><span>Generate QR</span></button>
+          <div id="qrOutput"></div>
+        </div>
+      </div>
+
+      <!-- ── AI HUB PAGE ── -->
+      <div class="page" id="page-ai">
+        <div class="page-header">
+          <h1 class="page-title">🤖 AI Hub</h1>
+          <p class="page-sub">Access top AI tools and assistants</p>
+        </div>
+        <div class="ai-banner glass-card">
+          <div class="ai-banner-text">
+            <h3>💡 Try AI-Powered Search</h3>
+            <p>Ask anything and get intelligent answers using Claude AI</p>
+          </div>
+          <button class="btn-primary" onclick="openAIChat()"><span>Open AI Chat ✨</span></button>
+        </div>
+        <div class="portal-grid" id="aiGrid"></div>
+      </div>
+
+      <!-- ── DAILY USE PAGE ── -->
+      <div class="page" id="page-daily">
+        <div class="page-header">
+          <h1 class="page-title">🌐 Daily Use</h1>
+          <p class="page-sub">Your everyday digital tools in one place</p>
+        </div>
+        <div class="portal-grid" id="dailyGrid"></div>
+      </div>
+
+      <!-- ── FAVORITES PAGE ── -->
+      <div class="page" id="page-favorites">
+        <div class="page-header">
+          <h1 class="page-title">⭐ Favorites</h1>
+          <p class="page-sub">Your bookmarked portals and tools</p>
+        </div>
+        <div class="portal-grid" id="favGrid">
+          <div class="empty-state">No favorites yet. Click ⭐ on any portal card to add!</div>
+        </div>
+      </div>
+
+      <!-- ── PROFILE PAGE ── -->
+      <div class="page" id="page-profile">
+        <div class="page-header">
+          <h1 class="page-title">👤 My Profile</h1>
+        </div>
+        <div class="profile-layout">
+          <div class="profile-card glass-card">
+            <div class="profile-avatar" id="profileAvatar">A</div>
+            <h2 id="profileName">User</h2>
+            <p id="profileEmail" style="color:var(--muted)">user@email.com</p>
+            <div class="profile-badges">
+              <span class="badge badge-blue">✅ Verified</span>
+              <span class="badge badge-green">🟢 Active</span>
+            </div>
+            <button class="btn-primary" style="margin-top:20px" onclick="editProfile()"><span>✏️ Edit Profile</span></button>
+          </div>
+          <div class="profile-info glass-card">
+            <h3>Account Information</h3>
+            <div class="info-row"><span>📧 Email</span><span id="infoEmail">—</span></div>
+            <div class="info-row"><span>📱 Mobile</span><span>+91 ••••••1234</span></div>
+            <div class="info-row"><span>📅 Joined</span><span id="joinDate">—</span></div>
+            <div class="info-row"><span>🔐 2FA</span><span class="badge badge-green">Enabled</span></div>
+            <div class="info-row"><span>🌍 Region</span><span>India 🇮🇳</span></div>
+            <h3 style="margin-top:24px">Security</h3>
+            <button class="btn-ghost" style="margin-bottom:10px" onclick="alert('Password reset OTP sent!')">🔑 Change Password</button>
+            <button class="btn-ghost btn-danger" onclick="handleLogout()">🚪 Logout All Devices</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS PAGE ── -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <h1 class="page-title">⚙️ Settings</h1>
+        </div>
+        <div class="settings-grid">
+          <div class="settings-card glass-card">
+            <h3>🎨 Appearance</h3>
+            <div class="setting-row">
+              <span>Dark Mode</span>
+              <label class="toggle"><input type="checkbox" id="darkToggle" checked onchange="toggleTheme()"/><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-row">
+              <span>Compact View</span>
+              <label class="toggle"><input type="checkbox" onchange="toggleCompact(this)"/><span class="toggle-slider"></span></label>
+            </div>
+            <div class="setting-row">
+              <span>Animations</span>
+              <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+          <div class="settings-card glass-card">
+            <h3>🔔 Notifications</h3>
+            <div class="setting-row"><span>Email Alerts</span><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><span>SMS Alerts</span><label class="toggle"><input type="checkbox"/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><span>Push Notifications</span><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+          </div>
+          <div class="settings-card glass-card">
+            <h3>🔐 Privacy & Security</h3>
+            <div class="setting-row"><span>Two-Factor Auth</span><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><span>Session Logs</span><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <button class="btn-ghost" style="margin-top:12px" onclick="alert('Sessions cleared!')">🗑️ Clear All Sessions</button>
+          </div>
+          <div class="settings-card glass-card">
+            <h3>📊 Dashboard</h3>
+            <div class="setting-row"><span>Show Recent</span><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <div class="setting-row"><span>Analytics</span><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div>
+            <button class="btn-ghost" style="margin-top:12px" onclick="clearData()">🗑️ Clear Favorites & History</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── NOTIFICATIONS PAGE ── -->
+      <div class="page" id="page-notifications">
+        <div class="page-header">
+          <h1 class="page-title">🔔 Notifications</h1>
+        </div>
+        <div class="notif-list glass-card" id="notifList"></div>
+      </div>
+
+      <!-- ── ADMIN PAGE ── -->
+      <div class="page" id="page-admin">
+        <div class="page-header">
+          <h1 class="page-title">🛡️ Admin Dashboard</h1>
+          <p class="page-sub">System overview and management</p>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#4fc3f722">👥</div>
+            <div><div class="stat-num">1,248</div><div class="stat-lbl">Total Users</div></div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#66bb6a22">✅</div>
+            <div><div class="stat-num">987</div><div class="stat-lbl">Active Today</div></div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#ffa72622">⚡</div>
+            <div><div class="stat-num">45.2K</div><div class="stat-lbl">Portal Clicks</div></div>
+          </div>
+          <div class="stat-card glass-card">
+            <div class="stat-icon" style="background:#ef535022">🚨</div>
+            <div><div class="stat-num">3</div><div class="stat-lbl">Security Alerts</div></div>
+          </div>
+        </div>
+        <div class="admin-grid">
+          <div class="glass-card admin-card">
+            <h3>👥 Recent Users</h3>
+            <table class="admin-table">
+              <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Abdul M.</td><td>abdul@email.com</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td>Priya S.</td><td>priya@email.com</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td>Rahul K.</td><td>rahul@email.com</td><td><span class="badge badge-blue">Pending OTP</span></td></tr>
+                <tr><td>Meera T.</td><td>meera@email.com</td><td><span class="badge badge-red">Blocked</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="glass-card admin-card">
+            <h3>🔐 Security Logs</h3>
+            <div class="log-list">
+              <div class="log-item log-warn">⚠️ Failed login attempt — 192.168.1.45 — 2 min ago</div>
+              <div class="log-item log-info">ℹ️ New user registered — rahul@email.com — 10 min ago</div>
+              <div class="log-item log-danger">🚨 Rate limit triggered — IP 10.0.0.12 — 25 min ago</div>
+              <div class="log-item log-success">✅ OTP verified — priya@email.com — 1 hr ago</div>
+              <div class="log-item log-info">ℹ️ Password reset — meera@email.com — 2 hr ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- AI CHAT MODAL -->
+<div class="modal-overlay" id="aiModal" onclick="closeAIModal(event)">
+  <div class="ai-chat-modal glass-card">
+    <div class="ai-chat-header">
+      <span>🤖 AI Assistant</span>
+      <button onclick="document.getElementById('aiModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="ai-chat-messages" id="aiMessages">
+      <div class="ai-msg bot-msg">👋 Hello! I'm your SmartDash AI assistant. How can I help you navigate Indian government services, banking, or education today?</div>
+    </div>
+    <div class="ai-chat-input">
+      <input type="text" id="aiInput" placeholder="Ask me anything…" onkeydown="if(event.key==='Enter')sendAIMsg()"/>
+      <button onclick="sendAIMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
